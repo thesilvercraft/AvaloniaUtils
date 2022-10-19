@@ -35,7 +35,7 @@ namespace SilverAudioPlayer.Avalonia
             }
         }
         public static EventHandler<Tuple<bool, WindowTransparencyLevel, Color>> OnStyleChange;
-        public static Color ReadColor(this string varname, Color? def= null)
+        public static Color ReadColor(this string varname, Color? def = null)
         {
             var color = GetEnv(varname);
             if (color != null)
@@ -56,6 +56,50 @@ namespace SilverAudioPlayer.Avalonia
             return def ?? Colors.Coral;
 
         }
+        public static Color? ParseColor(string value)
+        {
+            if (!Color.TryParse(value, out Color c))
+            {
+                if (Enum.TryParse(value, out KnownColor kc))
+                {
+                    return kc.ToColor();
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            return c;
+        }
+        public static IBrush ReadBackground(this string varname, Color? def = null)
+        {
+            var color = GetEnv(varname);
+            if (color != null)
+            {
+                if (color.Contains(','))
+                {
+                    var colors = color.Split(',');
+                    double perpart = 1d / colors.Length;
+                    double alreadygiven = 0;
+
+                    var gradient = new LinearGradientBrush();
+
+                    foreach (var c in colors)
+                    {
+                        var cc = ParseColor(c);
+                        if (cc != null)
+                        {
+                            gradient.GradientStops.Add(new((Color)cc, alreadygiven));
+                            alreadygiven += perpart;
+                        }
+                    }
+                    return gradient;
+                }
+                return new SolidColorBrush(ParseColor(color) ?? Colors.Coral, GetEnv("DisableSAPTransparency") == "true" ? 1 : 0.3);
+            }
+            return new SolidColorBrush(def ?? Colors.Coral, GetEnv("DisableSAPTransparency") == "true" ? 1 : 0.3);
+
+        }
         public static Color ToColor(this KnownColor kc)
         {
             return Color.FromUInt32((uint)kc);
@@ -63,18 +107,16 @@ namespace SilverAudioPlayer.Avalonia
         public static void DoAfterInitTasks(this Window w, bool firstrun)
         {
             w.TransparencyLevelHint = GetEnv<WindowTransparencyLevel>("SAPTransparency") ?? WindowTransparencyLevel.AcrylicBlur;
-            if(firstrun)
+            if (firstrun)
             {
-                EventHandler<Tuple<bool, WindowTransparencyLevel, Color>> x = ( _, _) => {
+                EventHandler<Tuple<bool, WindowTransparencyLevel, Color>> x = (_, _) =>
+                {
                     Dispatcher.UIThread.InvokeAsync(() => w.DoAfterInitTasks(false));
                 };
-                OnStyleChange +=x;
+                OnStyleChange += x;
                 w.Closing += (_, _) => { if (OnStyleChange != null) { OnStyleChange -= x; } };
             }
-            var color = ReadColor("SAPColor",def:Colors.Black);
-
-                w.Background = new SolidColorBrush(color, GetEnv("DisableSAPTransparency") == "true" ? 1 : 0.3);
-
+            w.Background = ReadBackground("SAPColor", def: Colors.Black);
         }
 
     }
