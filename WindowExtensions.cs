@@ -71,7 +71,7 @@ namespace SilverAudioPlayer.Avalonia
             }
             return c;
         }
-        public static IBrush ReadBackground(this string varname, Color? def = null)
+        public static IBrush ReadBackground(this string varname, IBrush? def = null)
         {
             var color = GetEnv(varname);
             if (color != null)
@@ -97,26 +97,26 @@ namespace SilverAudioPlayer.Avalonia
                 }
                 return new SolidColorBrush(ParseColor(color) ?? Colors.Coral, GetEnv("DisableSAPTransparency") == "true" ? 1 : 0.3);
             }
-            return new SolidColorBrush(def ?? Colors.Coral, GetEnv("DisableSAPTransparency") == "true" ? 1 : 0.3);
+            return def ?? new SolidColorBrush(Colors.Coral, GetEnv("DisableSAPTransparency") == "true" ? 1 : 0.3);
 
         }
         public static Color ToColor(this KnownColor kc)
         {
             return Color.FromUInt32((uint)kc);
         }
-        public static void DoAfterInitTasks(this Window w, bool firstrun)
+        public static void DoAfterInitTasks(this Window w, bool firstrun, IBrush? def = null)
         {
             w.TransparencyLevelHint = GetEnv<WindowTransparencyLevel>("SAPTransparency") ?? WindowTransparencyLevel.AcrylicBlur;
             if (firstrun)
             {
                 EventHandler<Tuple<bool, WindowTransparencyLevel, Color>> x = (_, _) =>
                 {
-                    Dispatcher.UIThread.InvokeAsync(() => w.DoAfterInitTasks(false));
+                    Dispatcher.UIThread.InvokeAsync(() => w.DoAfterInitTasks(false, def: def));
                 };
                 OnStyleChange += x;
                 w.Closing += (_, _) => { if (OnStyleChange != null) { OnStyleChange -= x; } };
             }
-            w.Background = ReadBackground("SAPColor", def: Colors.Black);
+            w.Background = ReadBackground("SAPColor", def: def);
         }
 
     }
