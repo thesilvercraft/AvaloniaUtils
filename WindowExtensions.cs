@@ -5,6 +5,7 @@ using System;
 
 namespace SilverAudioPlayer.Avalonia
 {
+    public record class StylingChangeData(bool? IsTransparent,string? SAPColor, WindowTransparencyLevel? SAPTransparency);
     public static class WindowExtensions
     {
         public static string? GetEnv(this string EnvvarName)
@@ -34,7 +35,7 @@ namespace SilverAudioPlayer.Avalonia
                 Environment.SetEnvironmentVariable(EnvvarName, Value);
             }
         }
-        public static EventHandler<Tuple<bool, WindowTransparencyLevel, Color>> OnStyleChange;
+        public static EventHandler<StylingChangeData> OnStyleChange;
         public static Color ReadColor(this string varname, Color? def = null)
         {
             var color = GetEnv(varname);
@@ -107,16 +108,30 @@ namespace SilverAudioPlayer.Avalonia
         public static void DoAfterInitTasks(this Window w, bool firstrun, IBrush? def = null)
         {
             w.TransparencyLevelHint = GetEnv<WindowTransparencyLevel>("SAPTransparency") ?? WindowTransparencyLevel.AcrylicBlur;
+            w.Background = ReadBackground("SAPColor", def: def);
             if (firstrun)
             {
-                EventHandler<Tuple<bool, WindowTransparencyLevel, Color>> x = (_, _) =>
+                EventHandler<StylingChangeData> x = (_, y) =>
                 {
-                    Dispatcher.UIThread.InvokeAsync(() => w.DoAfterInitTasks(false, def: def));
+                    if(y!=null)
+                    {
+                        if(y.SAPColor!=null)
+                        {
+                            Dispatcher.UIThread.InvokeAsync(() => w.Background = ReadBackground(y.SAPColor, def));
+                        }
+                        if (y.SAPTransparency != null)
+                        {
+                            Dispatcher.UIThread.InvokeAsync(() => w.TransparencyLevelHint = y.SAPTransparency ?? WindowTransparencyLevel.AcrylicBlur);
+                        }
+                    }
+                    else
+                    {
+                        Dispatcher.UIThread.InvokeAsync(() => w.DoAfterInitTasks(false, def: def));
+                    }
                 };
                 OnStyleChange += x;
                 w.Closing += (_, _) => { if (OnStyleChange != null) { OnStyleChange -= x; } };
             }
-            w.Background = ReadBackground("SAPColor", def: def);
         }
 
     }
