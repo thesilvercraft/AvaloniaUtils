@@ -2,43 +2,20 @@
 using Avalonia.Media;
 using Avalonia.Threading;
 using System;
+using System.IO;
 
-namespace SilverAudioPlayer.Avalonia
+namespace SilverCraft.AvaloniaUtils
 {
     public record class StylingChangeData(bool? IsTransparent,string? SAPColor, WindowTransparencyLevel? SAPTransparency);
     public static class WindowExtensions
     {
-        public static string? GetEnv(this string EnvvarName)
-        {
-            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-            {
-                return Environment.GetEnvironmentVariable(EnvvarName, EnvironmentVariableTarget.User);
-            }
-            return Environment.GetEnvironmentVariable(EnvvarName);
-        }
-        public static T? GetEnv<T>(this string EnvvarName) where T : struct
-        {
-            if (Enum.TryParse(GetEnv(EnvvarName), out T value2))
-            {
-                return value2;
-            }
-            return null;
-        }
-        public static void SetEnv(this string EnvvarName, string? Value)
-        {
-            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-            {
-                Environment.SetEnvironmentVariable(EnvvarName, Value, EnvironmentVariableTarget.User);
-            }
-            else
-            {
-                Environment.SetEnvironmentVariable(EnvvarName, Value);
-            }
-        }
-        public static EventHandler<StylingChangeData> OnStyleChange;
+
+        public static IEnvBackend envBackend = new ModernDotFileBackend(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"SilverCraftAvaloniav1Shared","dotfile.json"));
+public static EventHandler<StylingChangeData> OnStyleChange;
+        static bool DisSAPTransparency => envBackend.GetBool("DisableSAPTransparency") == true;
         public static Color ReadColor(this string varname, Color? def = null)
         {
-            var color = GetEnv(varname);
+            var color = envBackend.GetString(varname);
             if (color != null)
             {
                 if (!Color.TryParse(color, out Color c))
@@ -72,7 +49,7 @@ namespace SilverAudioPlayer.Avalonia
             }
             return c;
         }
-        public static IBrush ParseBackground(this string color, IBrush? def = null)
+        public static IBrush ParseBackground(this string? color, IBrush? def = null)
         {
             if (color != null)
             {
@@ -95,9 +72,9 @@ namespace SilverAudioPlayer.Avalonia
                     }
                     return gradient;
                 }
-                return new SolidColorBrush(ParseColor(color) ?? Colors.Coral, GetEnv("DisableSAPTransparency") == "true" ? 1 : 0.3);
+                return new SolidColorBrush(ParseColor(color) ?? Colors.Coral, envBackend.GetBool("DisableSAPTransparency") == true ? 1 : 0.3);
             }
-            return def ?? new SolidColorBrush(Colors.Coral, GetEnv("DisableSAPTransparency") == "true" ? 1 : 0.3);
+            return def ?? new SolidColorBrush(Colors.Coral, DisSAPTransparency ? 1 : 0.3);
 
         }
         public static Color ToColor(this KnownColor kc)
@@ -106,8 +83,8 @@ namespace SilverAudioPlayer.Avalonia
         }
         public static void DoAfterInitTasks(this Window w, bool firstrun, IBrush? def = null)
         {
-            w.TransparencyLevelHint = GetEnv<WindowTransparencyLevel>("SAPTransparency") ?? WindowTransparencyLevel.AcrylicBlur;
-            w.Background = ParseBackground(GetEnv("SAPColor"), def: def);
+            w.TransparencyLevelHint = envBackend.GetEnum<WindowTransparencyLevel>("SAPTransparency") ?? WindowTransparencyLevel.AcrylicBlur;
+            w.Background = ParseBackground(envBackend.GetString("SAPColor"), def: def);
             if (firstrun)
             {
                 EventHandler<StylingChangeData> x = (_, y) =>
