@@ -72,9 +72,8 @@ namespace SilverAudioPlayer.Avalonia
             }
             return c;
         }
-        public static IBrush ReadBackground(this string varname, IBrush? def = null)
+        public static IBrush ParseBackground(this string color, IBrush? def = null)
         {
-            var color = GetEnv(varname);
             if (color != null)
             {
                 if (color.Contains(','))
@@ -108,7 +107,7 @@ namespace SilverAudioPlayer.Avalonia
         public static void DoAfterInitTasks(this Window w, bool firstrun, IBrush? def = null)
         {
             w.TransparencyLevelHint = GetEnv<WindowTransparencyLevel>("SAPTransparency") ?? WindowTransparencyLevel.AcrylicBlur;
-            w.Background = ReadBackground("SAPColor", def: def);
+            w.Background = ParseBackground(GetEnv("SAPColor"), def: def);
             if (firstrun)
             {
                 EventHandler<StylingChangeData> x = (_, y) =>
@@ -117,7 +116,7 @@ namespace SilverAudioPlayer.Avalonia
                     {
                         if(y.SAPColor!=null)
                         {
-                            Dispatcher.UIThread.InvokeAsync(() => w.Background = ReadBackground(y.SAPColor, def));
+                            Dispatcher.UIThread.InvokeAsync(() => w.Background = ParseBackground(y.SAPColor, def));
                         }
                         if (y.SAPTransparency != null)
                         {
