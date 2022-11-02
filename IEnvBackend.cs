@@ -46,6 +46,10 @@ namespace SilverCraft.AvaloniaUtils
         public ModernDotFileBackend(string loc)
         {
             FileLoc = loc;
+            if(!Directory.Exists(Path.GetDirectoryName(loc)))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(loc));
+            }
         }
 
         public bool? GetBool(string EnvvarName)
@@ -150,7 +154,14 @@ namespace SilverCraft.AvaloniaUtils
             {
                 jsonData = new();
             }
-            jsonData.Add(new(EnvvarName, Value));
+            if (jsonData.ContainsKey(EnvvarName))
+            {
+                jsonData[EnvvarName]=Value;
+            }
+            else
+            {
+                jsonData.Add(new(EnvvarName, Value));
+            }
             File.WriteAllText(FileLoc, JsonSerializer.Serialize(jsonData));
         }
 
@@ -165,7 +176,14 @@ namespace SilverCraft.AvaloniaUtils
             {
                 jsonData = new();
             }
-            jsonData.Add(new(EnvvarName, Value));
+            if (jsonData.ContainsKey(EnvvarName))
+            {
+                jsonData[EnvvarName] = Value;
+            }
+            else
+            {
+                jsonData.Add(new(EnvvarName, Value));
+            }
             File.WriteAllText(FileLoc, JsonSerializer.Serialize(jsonData));
         }
 
@@ -180,7 +198,14 @@ namespace SilverCraft.AvaloniaUtils
             {
                 jsonData = new();
             }
-            jsonData.Add(new(EnvvarName, Value));
+            if (jsonData.ContainsKey(EnvvarName))
+            {
+                jsonData[EnvvarName] = Value;
+            }
+            else
+            {
+                jsonData.Add(new(EnvvarName, Value));
+            }
             File.WriteAllText(FileLoc, JsonSerializer.Serialize(jsonData));
         }
 
@@ -195,7 +220,14 @@ namespace SilverCraft.AvaloniaUtils
             {
                 jsonData = new();
             }
-            jsonData.Add(new(EnvvarName, JsonSerializer.SerializeToNode(Value)));
+            if (jsonData.ContainsKey(EnvvarName))
+            {
+                jsonData[EnvvarName] = JsonSerializer.SerializeToNode(Value);
+            }
+            else
+            {
+                jsonData.Add(new(EnvvarName, JsonSerializer.SerializeToNode(Value)));
+            }
             File.WriteAllText(FileLoc, JsonSerializer.Serialize(jsonData));
 
         }
@@ -211,7 +243,14 @@ namespace SilverCraft.AvaloniaUtils
             {
                 jsonData = new();
             }
-            jsonData.Add(new(EnvvarName, Value));
+            if (jsonData.ContainsKey(EnvvarName))
+            {
+                jsonData[EnvvarName] = JsonSerializer.SerializeToNode(Value);
+            }
+            else
+            {
+                jsonData.Add(new(EnvvarName, JsonSerializer.SerializeToNode(Value)));
+            }
             File.WriteAllText(FileLoc, JsonSerializer.Serialize(jsonData));
         }
 
@@ -226,7 +265,14 @@ namespace SilverCraft.AvaloniaUtils
             {
                 jsonData = new();
             }
-            jsonData.Add(new(EnvvarName, Value));
+            if (jsonData.ContainsKey(EnvvarName))
+            {
+                jsonData[EnvvarName] = JsonSerializer.SerializeToNode(Value);
+            }
+            else
+            {
+                jsonData.Add(new(EnvvarName, JsonSerializer.SerializeToNode(Value)));
+            }
             File.WriteAllText(FileLoc, JsonSerializer.Serialize(jsonData));
         }
 
@@ -241,7 +287,14 @@ namespace SilverCraft.AvaloniaUtils
             {
                 jsonData = new();
             }
-            jsonData.Add(new(EnvvarName, Value));
+            if (jsonData.ContainsKey(EnvvarName))
+            {
+                jsonData[EnvvarName] = JsonSerializer.SerializeToNode(Value);
+            }
+            else
+            {
+                jsonData.Add(new(EnvvarName, JsonSerializer.SerializeToNode(Value)));
+            }
             File.WriteAllText(FileLoc, JsonSerializer.Serialize(jsonData));
         }
 
