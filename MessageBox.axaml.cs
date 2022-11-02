@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using SilverAudioPlayer.Avalonia;
 
 namespace SilverCraft.AvaloniaUtils
 {
