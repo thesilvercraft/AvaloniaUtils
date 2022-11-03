@@ -72,7 +72,8 @@ public static EventHandler<StylingChangeData> OnStyleChange;
                     }
                     return gradient;
                 }
-                return new SolidColorBrush(ParseColor(color) ?? Colors.Coral, envBackend.GetBool("DisableSAPTransparency") == true ? 1 : 0.3);
+                var co = ParseColor(color);
+                return co ==null? (def ?? new SolidColorBrush(Colors.Coral, DisSAPTransparency ? 1 : 0.3)) :new SolidColorBrush((Color)co, envBackend.GetBool("DisableSAPTransparency") == true ? 1 : 0.3);
             }
             return def ?? new SolidColorBrush(Colors.Coral, DisSAPTransparency ? 1 : 0.3);
 
@@ -91,13 +92,18 @@ public static EventHandler<StylingChangeData> OnStyleChange;
                 {
                     if(y!=null)
                     {
-                        if(y.SAPColor!=null)
-                        {
-                            Dispatcher.UIThread.InvokeAsync(() => w.Background = ParseBackground(y.SAPColor, def));
-                        }
                         if (y.SAPTransparency != null)
                         {
                             Dispatcher.UIThread.InvokeAsync(() => w.TransparencyLevelHint = y.SAPTransparency ?? WindowTransparencyLevel.AcrylicBlur);
+                        }
+                        if (y.SAPColor != null)
+                        {
+                            Dispatcher.UIThread.InvokeAsync(() => w.Background = ParseBackground(y.SAPColor, def));
+                            return;
+                        }
+                        if (y.IsTransparent != null)
+                        {
+                            Dispatcher.UIThread.InvokeAsync(() => w.Background = ParseBackground(y.SAPColor, def));
                         }
                     }
                     else
