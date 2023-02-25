@@ -43,117 +43,81 @@ namespace SilverCraft.AvaloniaUtils
     public class ModernDotFileBackend : IEnvBackend
     {
         string FileLoc;
+        private FileSystemWatcher _watcher;
         public ModernDotFileBackend(string loc)
         {
             FileLoc = loc;
-            if(!Directory.Exists(Path.GetDirectoryName(loc)))
+            var dir = Path.GetDirectoryName(loc);
+            if(!Directory.Exists(dir))
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(loc));
+                Directory.CreateDirectory(dir);
+                _watcher = new(dir)
+                {
+                    Filter = Path.GetFileName(loc),
+                    EnableRaisingEvents = true,
+                    IncludeSubdirectories = false,
+                    NotifyFilter = NotifyFilters.LastWrite
+                };
+                _watcher.Changed+=WatcherOnChanged;
             }
+            
+        }
+        
+        private void WatcherOnChanged(object sender, FileSystemEventArgs e)
+        {
+            WindowExtensions.OnStyleChange.Invoke(this,new ( null, GetString("SAPColor"), ((IEnvBackend)this).GetEnum<WindowTransparencyLevel>("SAPTransparency")));
         }
 
-        public bool? GetBool(string EnvvarName)
+        public JsonElement? GetJsonElement(string EnvvarName)
         {
-            if (File.Exists(FileLoc))
+            if (!File.Exists(FileLoc)) return null;
+            var jsonData = JsonSerializer.Deserialize<JsonElement>(File.ReadAllText(FileLoc));
+            if (jsonData.TryGetProperty(EnvvarName, out var val))
             {
-                JsonElement jsonData = JsonSerializer.Deserialize<JsonElement>(File.ReadAllText(FileLoc));
-                if (jsonData.TryGetProperty(EnvvarName, out var val))
-                {
-                    return val.GetBoolean();
-                }
+                return val;
             }
             return null;
+        }
+        public bool? GetBool(string EnvvarName)
+        {
+            return GetJsonElement(EnvvarName)?.GetBoolean();
         }
 
         public byte? GetByte(string EnvvarName)
         {
-            if (File.Exists(FileLoc))
-            {
-                JsonElement jsonData = JsonSerializer.Deserialize<JsonElement>(File.ReadAllText(FileLoc));
-                if (jsonData.TryGetProperty(EnvvarName, out var val))
-                {
-                    return val.GetByte();
-                }
-            }
-            return null;
+            return GetJsonElement(EnvvarName)?.GetByte();
         }
 
         public decimal? GetDecimal(string EnvvarName)
         {
-            if (File.Exists(FileLoc))
-            {
-                JsonElement jsonData = JsonSerializer.Deserialize<JsonElement>(File.ReadAllText(FileLoc));
-                if (jsonData.TryGetProperty(EnvvarName, out var val))
-                {
-                    return val.GetDecimal();
-                }
-            }
-            return null;
+            return GetJsonElement(EnvvarName)?.GetDecimal();
         }
 
         public T? GetEnv<T>(string EnvvarName) where T : class
         {
-            if (File.Exists(FileLoc))
-            {
-                JsonElement jsonData = JsonSerializer.Deserialize<JsonElement>(File.ReadAllText(FileLoc));
-                if(jsonData.TryGetProperty(EnvvarName, out var val))
-                {
-                    return val.Deserialize<T>();
-                }
-            }
-            return null;
+            if (!File.Exists(FileLoc)) return null;
+            var jsonData = JsonSerializer.Deserialize<JsonElement>(File.ReadAllText(FileLoc));
+            return jsonData.TryGetProperty(EnvvarName, out var val) ? val.Deserialize<T>() : null;
         }
 
         public int? GetInt(string EnvvarName)
         {
-            if (File.Exists(FileLoc))
-            {
-                JsonElement jsonData = JsonSerializer.Deserialize<JsonElement>(File.ReadAllText(FileLoc));
-                if (jsonData.TryGetProperty(EnvvarName, out var val))
-                {
-                    return val.GetInt32();
-                }
-            }
-            return null;
+            return GetJsonElement(EnvvarName)?.GetInt32();
         }
 
         public float? GetSingle(string EnvvarName)
         {
-            if (File.Exists(FileLoc))
-            {
-                JsonElement jsonData = JsonSerializer.Deserialize<JsonElement>(File.ReadAllText(FileLoc));
-                if (jsonData.TryGetProperty(EnvvarName, out var val))
-                {
-                    return val.GetSingle();
-                }
-            }
-            return null;
+            return GetJsonElement(EnvvarName)?.GetSingle();
         }
 
         public string? GetString(string EnvvarName)
         {
-            if (File.Exists(FileLoc))
-            {
-                JsonElement jsonData = JsonSerializer.Deserialize<JsonElement>(File.ReadAllText(FileLoc));
-                if (jsonData.TryGetProperty(EnvvarName, out var val))
-                {
-                    return val.GetString();
-                }
-            }
-            return null;
+            return GetJsonElement(EnvvarName)?.GetString();
         }
 
         public void SetBool(string EnvvarName, bool? Value)
         {
-            JsonObject jsonData;
-            if (File.Exists(FileLoc))
-            {
-                jsonData = JsonSerializer.Deserialize<JsonObject>(File.ReadAllText(FileLoc));
-            }
-            else
-            {
-                jsonData = new();
-            }
+            JsonObject jsonData = File.Exists(FileLoc) ? JsonSerializer.Deserialize<JsonObject>(File.ReadAllText(FileLoc)) : new();
             if (jsonData.ContainsKey(EnvvarName))
             {
                 jsonData[EnvvarName]=Value;
@@ -167,15 +131,8 @@ namespace SilverCraft.AvaloniaUtils
 
         public void SetByte(string EnvvarName, byte? Value)
         {
-            JsonObject jsonData;
-            if (File.Exists(FileLoc))
-            {
-                jsonData = JsonSerializer.Deserialize<JsonObject>(File.ReadAllText(FileLoc));
-            }
-            else
-            {
-                jsonData = new();
-            }
+            JsonObject jsonData = File.Exists(FileLoc) ? JsonSerializer.Deserialize<JsonObject>(File.ReadAllText(FileLoc)) : new();
+
             if (jsonData.ContainsKey(EnvvarName))
             {
                 jsonData[EnvvarName] = Value;
@@ -189,15 +146,7 @@ namespace SilverCraft.AvaloniaUtils
 
         public void SetDecimal(string EnvvarName, decimal? Value)
         {
-            JsonObject jsonData;
-            if (File.Exists(FileLoc))
-            {
-                jsonData = JsonSerializer.Deserialize<JsonObject>(File.ReadAllText(FileLoc));
-            }
-            else
-            {
-                jsonData = new();
-            }
+            JsonObject jsonData = File.Exists(FileLoc) ? JsonSerializer.Deserialize<JsonObject>(File.ReadAllText(FileLoc)) : new();
             if (jsonData.ContainsKey(EnvvarName))
             {
                 jsonData[EnvvarName] = Value;
@@ -211,15 +160,7 @@ namespace SilverCraft.AvaloniaUtils
 
         public void SetEnv<T>(string EnvvarName, T? Value) where T : class
         {
-            JsonObject jsonData;
-            if (File.Exists(FileLoc))
-            {
-                jsonData = JsonSerializer.Deserialize<JsonObject>(File.ReadAllText(FileLoc));
-            }
-            else
-            {
-                jsonData = new();
-            }
+            var jsonData = File.Exists(FileLoc) ? JsonSerializer.Deserialize<JsonObject>(File.ReadAllText(FileLoc)) : new();
             if (jsonData.ContainsKey(EnvvarName))
             {
                 jsonData[EnvvarName] = JsonSerializer.SerializeToNode(Value);
@@ -234,15 +175,7 @@ namespace SilverCraft.AvaloniaUtils
 
         public void SetInt(string EnvvarName, int? Value)
         {
-            JsonObject jsonData;
-            if (File.Exists(FileLoc))
-            {
-                jsonData = JsonSerializer.Deserialize<JsonObject>(File.ReadAllText(FileLoc));
-            }
-            else
-            {
-                jsonData = new();
-            }
+            var jsonData = File.Exists(FileLoc) ? JsonSerializer.Deserialize<JsonObject>(File.ReadAllText(FileLoc)) : new();
             if (jsonData.ContainsKey(EnvvarName))
             {
                 jsonData[EnvvarName] = JsonSerializer.SerializeToNode(Value);
@@ -256,15 +189,7 @@ namespace SilverCraft.AvaloniaUtils
 
         public void SetSingle(string EnvvarName, float? Value)
         {
-            JsonObject jsonData;
-            if (File.Exists(FileLoc))
-            {
-                jsonData = JsonSerializer.Deserialize<JsonObject>(File.ReadAllText(FileLoc));
-            }
-            else
-            {
-                jsonData = new();
-            }
+            var jsonData = File.Exists(FileLoc) ? JsonSerializer.Deserialize<JsonObject>(File.ReadAllText(FileLoc)) : new();
             if (jsonData.ContainsKey(EnvvarName))
             {
                 jsonData[EnvvarName] = JsonSerializer.SerializeToNode(Value);
@@ -278,51 +203,32 @@ namespace SilverCraft.AvaloniaUtils
 
         public void SetString(string EnvvarName, string? Value)
         {
-            JsonObject jsonData;
-            if (File.Exists(FileLoc))
-            {
-                jsonData = JsonSerializer.Deserialize<JsonObject>(File.ReadAllText(FileLoc));
-            }
-            else
-            {
-                jsonData = new();
-            }
-            if (jsonData.ContainsKey(EnvvarName))
-            {
-                jsonData[EnvvarName] = JsonSerializer.SerializeToNode(Value);
-            }
-            else
-            {
-                jsonData.Add(new(EnvvarName, JsonSerializer.SerializeToNode(Value)));
-            }
-            File.WriteAllText(FileLoc, JsonSerializer.Serialize(jsonData));
+            SetEnv(EnvvarName, Value);
+
         }
 
         E? IEnvBackend.GetEnum<E>(string EnvvarName)
         {
-            if (File.Exists(FileLoc))
+            if (!File.Exists(FileLoc)) return null;
+            var jsonData = JsonSerializer.Deserialize<JsonElement>(File.ReadAllText(FileLoc));
+            if (jsonData.TryGetProperty(EnvvarName, out var val))
             {
-                JsonElement jsonData = JsonSerializer.Deserialize<JsonElement>(File.ReadAllText(FileLoc));
-                if (jsonData.TryGetProperty(EnvvarName, out var val))
-                {
-                    return Enum.Parse<E>(val.GetString());
-                }
+                return Enum.Parse<E>(val.GetString());
             }
             return null;
         }
 
         void IEnvBackend.SetEnum<E>(string EnvvarName, E? Value) 
         {
-            JsonObject jsonData;
-            if (File.Exists(FileLoc))
+            var jsonData= File.Exists(FileLoc) ? JsonSerializer.Deserialize<JsonObject>(File.ReadAllText(FileLoc)) : new();
+            if (jsonData.ContainsKey(EnvvarName))
             {
-                jsonData = JsonSerializer.Deserialize<JsonObject>(File.ReadAllText(FileLoc));
+                jsonData[EnvvarName] = JsonSerializer.SerializeToNode(Enum.GetName(typeof(E),Value));
             }
             else
             {
-                jsonData = new();
+                jsonData.Add(new(EnvvarName, Enum.GetName(typeof(E),Value)));
             }
-            jsonData.Add(new(EnvvarName, Enum.GetName(typeof(E),Value)));
             File.WriteAllText(FileLoc, JsonSerializer.Serialize(jsonData));
         }
     }
@@ -471,7 +377,6 @@ namespace SilverCraft.AvaloniaUtils
         public void SetString(string EnvvarName, string? Value)
         {
             SetStringEnv(EnvvarName,Value);
-
         }
 
         public int? GetInt(string EnvvarName)
@@ -493,7 +398,6 @@ namespace SilverCraft.AvaloniaUtils
         public void SetEnum<E>(string EnvvarName, E? Value) where E : struct
         {
             SetStringEnv(EnvvarName, Enum.GetName(typeof(E), Value));
-
         }
     }
 }

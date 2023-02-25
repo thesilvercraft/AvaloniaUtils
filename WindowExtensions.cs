@@ -9,73 +9,63 @@ namespace SilverCraft.AvaloniaUtils
     public record class StylingChangeData(bool? IsTransparent,string? SAPColor, WindowTransparencyLevel? SAPTransparency);
     public static class WindowExtensions
     {
+        public static IEnvBackend envBackend = new ModernDotFileBackend(Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SilverCraftAvaloniav1Shared",
+            "dotfile.json"));
 
-        public static IEnvBackend envBackend = new ModernDotFileBackend(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"SilverCraftAvaloniav1Shared","dotfile.json"));
-public static EventHandler<StylingChangeData> OnStyleChange;
+        public static EventHandler<StylingChangeData> OnStyleChange;
         static bool DisSAPTransparency => envBackend.GetBool("DisableSAPTransparency") == true;
+
         public static Color ReadColor(this string varname, Color? def = null)
         {
             var color = envBackend.GetString(varname);
-            if (color != null)
+            if (color == null) return def ?? Colors.Coral;
+            if (Color.TryParse(color, out var c)) return c;
+            if (Enum.TryParse(color, out KnownColor kc))
             {
-                if (!Color.TryParse(color, out Color c))
-                {
-                    if (Enum.TryParse(color, out KnownColor kc))
-                    {
-                        c = kc.ToColor();
-                    }
-                    else
-                    {
-                        return def ?? Colors.Coral;
-                    }
-                }
-                return c;
+                c = kc.ToColor();
             }
-            return def ?? Colors.Coral;
+            else
+            {
+                return def ?? Colors.Coral;
+            }
+            return c;
 
         }
         public static Color? ParseColor(string value)
         {
-            if (!Color.TryParse(value, out Color c))
+            if (Color.TryParse(value, out var c)) return c;
+            if (Enum.TryParse(value, out KnownColor kc))
             {
-                if (Enum.TryParse(value, out KnownColor kc))
-                {
-                    return kc.ToColor();
-                }
-                else
-                {
-                    return null;
-                }
+                return kc.ToColor();
             }
-            return c;
+            else
+            {
+                return null;
+            }
         }
         public static IBrush ParseBackground(this string? color, IBrush? def = null)
         {
-            if (color != null)
+            if (color == null) return def ?? new SolidColorBrush(Colors.Coral, DisSAPTransparency ? 1 : 0.3);
+            if (color.Contains(','))
             {
-                if (color.Contains(','))
+                var colors = color.Split(',');
+                var perpart = 1d / colors.Length;
+                double alreadygiven = 0;
+
+                var gradient = new LinearGradientBrush();
+
+                foreach (var c in colors)
                 {
-                    var colors = color.Split(',');
-                    double perpart = 1d / colors.Length;
-                    double alreadygiven = 0;
-
-                    var gradient = new LinearGradientBrush();
-
-                    foreach (var c in colors)
-                    {
-                        var cc = ParseColor(c);
-                        if (cc != null)
-                        {
-                            gradient.GradientStops.Add(new((Color)cc, alreadygiven));
-                            alreadygiven += perpart;
-                        }
-                    }
-                    return gradient;
+                    var cc = ParseColor(c);
+                    if (cc == null) continue;
+                    gradient.GradientStops.Add(new((Color)cc, alreadygiven));
+                    alreadygiven += perpart;
                 }
-                var co = ParseColor(color);
-                return co ==null? (def ?? new SolidColorBrush(Colors.Coral, DisSAPTransparency ? 1 : 0.3)) :new SolidColorBrush((Color)co, envBackend.GetBool("DisableSAPTransparency") == true ? 1 : 0.3);
+                return gradient;
             }
-            return def ?? new SolidColorBrush(Colors.Coral, DisSAPTransparency ? 1 : 0.3);
+            var co = ParseColor(color);
+            return co ==null? (def ?? new SolidColorBrush(Colors.Coral, DisSAPTransparency ? 1 : 0.3)) :new SolidColorBrush((Color)co, envBackend.GetBool("DisableSAPTransparency") == true ? 1 : 0.3);
 
         }
         public static Color ToColor(this KnownColor kc)
@@ -86,34 +76,32 @@ public static EventHandler<StylingChangeData> OnStyleChange;
         {
             w.TransparencyLevelHint = envBackend.GetEnum<WindowTransparencyLevel>("SAPTransparency") ?? WindowTransparencyLevel.AcrylicBlur;
             w.Background = ParseBackground(envBackend.GetString("SAPColor"), def: def);
-            if (firstrun)
+            if (!firstrun) return;
+            EventHandler<StylingChangeData> x = (_, y) =>
             {
-                EventHandler<StylingChangeData> x = (_, y) =>
+                if(y!=null)
                 {
-                    if(y!=null)
+                    if (y.SAPTransparency != null)
                     {
-                        if (y.SAPTransparency != null)
-                        {
-                            Dispatcher.UIThread.InvokeAsync(() => w.TransparencyLevelHint = y.SAPTransparency ?? WindowTransparencyLevel.AcrylicBlur);
-                        }
-                        if (y.SAPColor != null)
-                        {
-                            Dispatcher.UIThread.InvokeAsync(() => w.Background = ParseBackground(y.SAPColor, def));
-                            return;
-                        }
-                        if (y.IsTransparent != null)
-                        {
-                            Dispatcher.UIThread.InvokeAsync(() => w.Background = ParseBackground(y.SAPColor, def));
-                        }
+                        Dispatcher.UIThread.InvokeAsync(() => w.TransparencyLevelHint = y.SAPTransparency ?? WindowTransparencyLevel.AcrylicBlur);
                     }
-                    else
+                    if (y.SAPColor != null)
                     {
-                        Dispatcher.UIThread.InvokeAsync(() => w.DoAfterInitTasks(false, def: def));
+                        Dispatcher.UIThread.InvokeAsync(() => w.Background = ParseBackground(y.SAPColor, def));
+                        return;
                     }
-                };
-                OnStyleChange += x;
-                w.Closing += (_, _) => { if (OnStyleChange != null) { OnStyleChange -= x; } };
-            }
+                    if (y.IsTransparent != null)
+                    {
+                        Dispatcher.UIThread.InvokeAsync(() => w.Background = ParseBackground(y.SAPColor, def));
+                    }
+                }
+                else
+                {
+                    Dispatcher.UIThread.InvokeAsync(() => w.DoAfterInitTasks(false, def: def));
+                }
+            };
+            OnStyleChange += x;
+            w.Closing += (_, _) => { if (OnStyleChange != null) { OnStyleChange -= x; } };
         }
 
     }

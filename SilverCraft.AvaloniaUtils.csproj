@@ -6,7 +6,7 @@
     <!--Avalonia doesen't support TrimMode=link currently,but we are working on that https://github.com/AvaloniaUI/Avalonia/issues/6892 -->
     <TrimMode>copyused</TrimMode>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
-    <VersionPrefix>11.0.0-prerelease</VersionPrefix>
+    <VersionPrefix>11.1.0-prerelease</VersionPrefix>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>SilverCraft AvaloniaUtils</Title>
     <RepositoryType>git</RepositoryType>

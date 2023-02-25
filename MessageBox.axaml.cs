@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 
 namespace SilverCraft.AvaloniaUtils
 {
@@ -13,10 +14,9 @@ namespace SilverCraft.AvaloniaUtils
         public MessageBox(string Title, string Message):this()
         {
             DataContext = new { Title , Message};
-
         }
 
-        private void CloseButtonClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        private void CloseButtonClick(object? o, RoutedEventArgs e)
         {
             Close();
         }
