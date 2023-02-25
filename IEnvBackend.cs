@@ -51,16 +51,16 @@ namespace SilverCraft.AvaloniaUtils
             if(!Directory.Exists(dir))
             {
                 Directory.CreateDirectory(dir);
-                _watcher = new(dir)
-                {
-                    Filter = Path.GetFileName(loc),
-                    EnableRaisingEvents = true,
-                    IncludeSubdirectories = false,
-                    NotifyFilter = NotifyFilters.LastWrite
-                };
-                _watcher.Changed+=WatcherOnChanged;
             }
-            
+            _watcher = new()
+            {
+                Filter = Path.GetFileName(loc),
+                Path = dir,
+                NotifyFilter = NotifyFilters.LastWrite,
+                IncludeSubdirectories = false
+            };
+            _watcher.Changed+=WatcherOnChanged;
+            _watcher.EnableRaisingEvents = true;
         }
         
         private void WatcherOnChanged(object sender, FileSystemEventArgs e)
