@@ -1,14 +1,7 @@
-﻿using Avalonia.Controls;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
-using System.Linq;
-using System.Net.Http.Headers;
-using System.Reflection.PortableExecutable;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Threading.Tasks;
 using System.Xml;
 
 namespace SilverCraft.AvaloniaUtils
@@ -65,7 +58,7 @@ namespace SilverCraft.AvaloniaUtils
         
         private void WatcherOnChanged(object sender, FileSystemEventArgs e)
         {
-            WindowExtensions.OnStyleChange.Invoke(this,new ( null, GetString("SAPColor"), ((IEnvBackend)this).GetEnum<WindowTransparencyLevel>("SAPTransparency")));
+            WindowExtensions.OnStyleChange.Invoke(this,new ( null, GetString("SAPColor"), WindowExtensions.GetTransparencyLevelsFromString(((IEnvBackend)this).GetString("SAPTransparency"))));
         }
 
         public JsonElement? GetJsonElement(string EnvvarName)

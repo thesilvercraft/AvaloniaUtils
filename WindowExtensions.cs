@@ -3,10 +3,11 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using System;
 using System.IO;
+using System.Linq;
 
 namespace SilverCraft.AvaloniaUtils
 {
-    public record class StylingChangeData(bool? IsTransparent,string? SAPColor, WindowTransparencyLevel? SAPTransparency);
+    public record class StylingChangeData(bool? IsTransparent,string? SAPColor, WindowTransparencyLevel[]? SAPTransparency);
     public static class WindowExtensions
     {
         public static IEnvBackend envBackend = new ModernDotFileBackend(Path.Combine(
@@ -72,9 +73,27 @@ namespace SilverCraft.AvaloniaUtils
         {
             return Color.FromUInt32((uint)kc);
         }
+
+        public static WindowTransparencyLevel GetTransparencyLevelFromString(string s)
+        {
+
+            return s switch
+            {   
+                "AcrylicBlur" => WindowTransparencyLevel.AcrylicBlur,
+                "Transparent"  => WindowTransparencyLevel.Transparent,
+                "Mica"  => WindowTransparencyLevel.Mica,
+                _=> WindowTransparencyLevel.AcrylicBlur
+            };
+        }
+        public static WindowTransparencyLevel[] GetTransparencyLevelsFromString(string s)
+        {
+            return s.Split(',').Select(GetTransparencyLevelFromString).ToArray();
+        }
         public static void DoAfterInitTasks(this Window w, bool firstrun, IBrush? def = null)
         {
-            w.TransparencyLevelHint = envBackend.GetEnum<WindowTransparencyLevel>("SAPTransparency") ?? WindowTransparencyLevel.AcrylicBlur;
+
+            w.TransparencyLevelHint =
+                GetTransparencyLevelsFromString(envBackend.GetString("SAPTransparency") ?? "Mica,AcrylicBlur,None");
             w.Background = ParseBackground(envBackend.GetString("SAPColor"), def: def);
             if (!firstrun) return;
             EventHandler<StylingChangeData> x = (_, y) =>
@@ -83,7 +102,7 @@ namespace SilverCraft.AvaloniaUtils
                 {
                     if (y.SAPTransparency != null)
                     {
-                        Dispatcher.UIThread.InvokeAsync(() => w.TransparencyLevelHint = y.SAPTransparency ?? WindowTransparencyLevel.AcrylicBlur);
+                        Dispatcher.UIThread.InvokeAsync(() => w.TransparencyLevelHint = y.SAPTransparency);
                     }
                     if (y.SAPColor != null)
                     {
