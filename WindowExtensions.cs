@@ -69,22 +69,17 @@ namespace SilverCraft.AvaloniaUtils
             return co ==null? (def ?? new SolidColorBrush(Colors.Coral, DisSAPTransparency ? 1 : 0.3)) :new SolidColorBrush((Color)co, envBackend.GetBool("DisableSAPTransparency") == true ? 1 : 0.3);
 
         }
-        public static Color ToColor(this KnownColor kc)
-        {
-            return Color.FromUInt32((uint)kc);
-        }
+        public static Color ToColor(this KnownColor kc) => Color.FromUInt32((uint)kc);
 
-        public static WindowTransparencyLevel GetTransparencyLevelFromString(string s)
-        {
-
-            return s switch
+        public static WindowTransparencyLevel GetTransparencyLevelFromString(string s) =>
+            s switch
             {   
                 "AcrylicBlur" => WindowTransparencyLevel.AcrylicBlur,
                 "Transparent"  => WindowTransparencyLevel.Transparent,
                 "Mica"  => WindowTransparencyLevel.Mica,
                 _=> WindowTransparencyLevel.AcrylicBlur
             };
-        }
+
         public static WindowTransparencyLevel[] GetTransparencyLevelsFromString(string s)
         {
             return s.Split(',').Select(GetTransparencyLevelFromString).ToArray();
