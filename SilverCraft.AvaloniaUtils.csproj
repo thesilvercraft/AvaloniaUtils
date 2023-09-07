@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <TrimMode>link</TrimMode>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
-    <VersionPrefix>11.0.0-rc1.1</VersionPrefix>
+    <VersionPrefix>11.0.4</VersionPrefix>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>SilverCraft AvaloniaUtils</Title>
     <RepositoryType>git</RepositoryType>
